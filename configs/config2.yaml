@@ -1,0 +1,46 @@
+# ============================================================
+# DINOv2 Deepfake Detection — Clean Config
+# Backbone : dinov2_vitb14 (ViT-Base, 768-dim CLS token)
+# Input    : Full image + Face crop -> concat 1536-dim -> MLP
+# ============================================================
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  faces_dir: "data/faces"
+  image_size: 224
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  num_workers: 4
+
+model:
+  dino_variant: "dinov2_vitb14"
+  freeze_backbone: true
+  unfreeze_last_n_blocks: 2
+  dual_input: true
+
+training:
+  batch_size: 64
+  epochs: 10
+  learning_rate: 0.0003
+  backbone_lr_factor: 0.05
+  weight_decay: 0.01
+  optimizer: "adamw"
+  scheduler: "cosine"
+  warmup_epochs: 3
+  early_stopping_patience: 10
+  label_smoothing: 0.1
+  seed: 42
+
+face_detection:
+  enabled: true
+  confidence_threshold: 0.9
+  margin: 40
+
+paths:
+  checkpoint_dir: "models2/checkpoints"
+  log_dir: "results2/logs"
+  plot_dir: "results2/plots"
+
+device: "cuda"

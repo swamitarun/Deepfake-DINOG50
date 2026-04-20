@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir \
 # Install remaining deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-deps --no-cache-dir facenet-pytorch==2.6.0
 
 # Copy app + static frontend files
 COPY app.py .

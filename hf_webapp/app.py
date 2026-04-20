@@ -233,15 +233,32 @@ def run_inference(model: DeepfakeDetector, frame_paths: list) -> dict:
     if not fake_probs:
         raise ValueError("No frames could be processed.")
 
-    avg_fake = float(np.mean(fake_probs))
-    avg_real = 1.0 - avg_fake
+    # 1. Advanced Aggregation (Top 50% Mean)
+    # Deepfake artifacts might only appear in parts of the video.
+    # Averaging all frames dilutes the score. We take the top 50% most suspicious frames.
+    sorted_probs = sorted(fake_probs, reverse=True)
+    top_k = max(1, len(sorted_probs) // 2)
+    video_fake_prob = float(np.mean(sorted_probs[:top_k]))
+
+    # 2. Ratio Check
+    # If at least 30% of frames are distinctly flagged as Fake, mark the whole video as Fake.
+    fake_frame_count = sum(1 for p in fake_probs if p > 0.5)
+    fake_ratio = fake_frame_count / len(fake_probs)
+
+    is_fake = (video_fake_prob > 0.5) or (fake_ratio >= 0.3)
+
+    # Ensure UI consistency: If flagged as FAKE by ratio, but probability is low, boost it to 51%
+    if is_fake and video_fake_prob <= 0.5:
+        video_fake_prob = 0.51
+
+    avg_real = 1.0 - video_fake_prob
 
     return {
-        "verdict": "FAKE" if avg_fake > 0.5 else "REAL",
-        "fake_probability": round(avg_fake * 100, 1),
+        "verdict": "FAKE" if is_fake else "REAL",
+        "fake_probability": round(video_fake_prob * 100, 1),
         "real_probability": round(avg_real * 100, 1),
         "frame_count": len(fake_probs),
-        "confidence": round(max(avg_fake, avg_real) * 100, 1),
+        "confidence": round(max(video_fake_prob, avg_real) * 100, 1),
         "per_frame_scores": [round(p * 100, 1) for p in fake_probs],
     }
 

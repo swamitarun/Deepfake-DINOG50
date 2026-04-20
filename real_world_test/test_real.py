@@ -61,14 +61,14 @@ def main():
         logger.warning(f"No videos found in {tests_dir}")
         return
 
-    config = load_config(os.path.join(base_dir, 'configs/config.yaml'))
+    config = load_config(os.path.join(base_dir, 'configs/config2.yaml'))
     device = get_device('cuda' if torch.cuda.is_available() else 'cpu')
     
     checkpoint_path = args.checkpoint
     if not checkpoint_path:
-        checkpoint_path = os.path.join(base_dir, 'models/checkpoints/best_model.pth')
+        checkpoint_path = os.path.join(base_dir, 'models2/checkpoints/best_model.pth')
         if not os.path.exists(checkpoint_path):
-            checkpoint_path = os.path.join(base_dir, 'models/checkpoints/best_mlp.pth')
+            checkpoint_path = os.path.join(base_dir, 'models2/checkpoints/best_mlp.pth')
             
     if not os.path.exists(checkpoint_path):
         logger.error(f"No checkpoint found at {checkpoint_path}")
