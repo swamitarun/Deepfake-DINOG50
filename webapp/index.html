@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeepShield AI — Deepfake Detector</title>
+  <meta name="description" content="Upload a video and detect deepfakes instantly using DINOv2 AI with confidence scores and per-frame analysis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Animated Background -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">🛡️</span>
+      <span class="brand-name">DeepShield <span class="brand-accent">AI</span></span>
+    </div>
+    <div class="nav-badge">DINOv2 Powered</div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-tag">⚡ Real-time Detection</div>
+    <h1 class="hero-title">
+      Detect <span class="gradient-text">Deepfakes</span><br />Instantly
+    </h1>
+    <p class="hero-subtitle">
+      Upload any video. Our DINOv2 Vision AI analyzes every frame<br />
+      and tells you exactly how likely a video is to be fake.
+    </p>
+  </header>
+
+  <!-- Main Card -->
+  <main class="main-card">
+
+    <!-- ── Upload Section ── -->
+    <section id="upload-section" class="upload-section">
+      <div
+        id="drop-zone"
+        class="drop-zone"
+        role="button"
+        tabindex="0"
+        aria-label="Upload video file"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event)"
+        onclick="document.getElementById('file-input').click()"
+        onkeypress="if(event.key==='Enter') document.getElementById('file-input').click()"
+      >
+        <div class="drop-icon">
+          <svg id="upload-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="30" fill="rgba(139,92,246,0.12)" stroke="rgba(139,92,246,0.4)" stroke-width="1.5"/>
+            <path d="M32 44V28M32 28L24 36M32 28L40 36" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 44h24" stroke="url(#g1)" stroke-width="2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="g1" x1="20" y1="28" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#06B6D4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <p class="drop-title">Drop your video here</p>
+        <p class="drop-sub">or <span class="link-text">browse files</span></p>
+        <p class="drop-limits">MP4 · MOV · AVI · MKV &nbsp;|&nbsp; Max 30 MB &nbsp;|&nbsp; Max 60 sec</p>
+      </div>
+      <input
+        id="file-input"
+        type="file"
+        accept=".mp4,.mov,.avi,.mkv,video/*"
+        style="display:none"
+        onchange="onFileSelected(event)"
+      />
+
+      <!-- File Preview -->
+      <div id="file-preview" class="file-preview hidden">
+        <div class="file-info">
+          <span class="file-icon">🎬</span>
+          <div class="file-meta">
+            <span id="file-name" class="file-name"></span>
+            <span id="file-size" class="file-size"></span>
+          </div>
+          <button class="remove-btn" onclick="resetUpload()" aria-label="Remove file">✕</button>
+        </div>
+        <div id="video-container" class="video-container">
+          <video id="video-preview" class="video-preview" controls muted></video>
+        </div>
+        <button id="analyze-btn" class="analyze-btn" onclick="analyzeVideo()">
+          <span class="btn-icon">🔍</span>
+          <span>Analyze for Deepfakes</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Loading Section ── -->
+    <section id="loading-section" class="loading-section hidden">
+      <div class="loading-animation">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring ring-2"></div>
+        <div class="spinner-ring ring-3"></div>
+        <div class="spinner-center">🤖</div>
+      </div>
+      <h3 class="loading-title">Analyzing Video...</h3>
+      <div class="loading-steps">
+        <div id="step-1" class="step active">
+          <span class="step-dot"></span>
+          <span>Extracting frames</span>
+        </div>
+        <div id="step-2" class="step">
+          <span class="step-dot"></span>
+          <span>Running DINOv2 inference</span>
+        </div>
+        <div id="step-3" class="step">
+          <span class="step-dot"></span>
+          <span>Generating results</span>
+        </div>
+      </div>
+      <p class="loading-note">⏳ This may take 30–90 seconds on CPU. Please wait…</p>
+    </section>
+
+    <!-- ── Results Section ── -->
+    <section id="results-section" class="results-section hidden">
+
+      <!-- Verdict Card -->
+      <div id="verdict-card" class="verdict-card">
+        <div class="verdict-left">
+          <div class="verdict-circle-wrap">
+            <svg class="verdict-ring" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="50" class="ring-bg"/>
+              <circle id="ring-fill" cx="60" cy="60" r="50" class="ring-progress"/>
+            </svg>
+            <div class="verdict-inner">
+              <span id="verdict-pct" class="verdict-pct">0%</span>
+              <span id="verdict-label" class="verdict-label">FAKE</span>
+            </div>
+          </div>
+          <p class="verdict-desc">Probability of being fake</p>
+        </div>
+
+        <div class="verdict-right">
+          <div id="verdict-badge" class="verdict-badge">⚠ FAKE</div>
+          <div class="verdict-stats">
+            <div class="stat-row">
+              <span class="stat-label">🎭 Fake probability</span>
+              <span id="stat-fake" class="stat-val fake-val">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">✅ Real probability</span>
+              <span id="stat-real" class="stat-val real-val">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🎞 Frames analyzed</span>
+              <span id="stat-frames" class="stat-val">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">📁 File size</span>
+              <span id="stat-size" class="stat-val">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-Frame Chart -->
+      <div class="chart-card">
+        <h3 class="chart-title">📊 Per-Frame Detection Scores</h3>
+        <p class="chart-sub">Higher bar = more likely FAKE for that frame</p>
+        <div id="frame-chart" class="frame-chart"></div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="dot dot-fake"></span>Fake</span>
+          <span class="legend-item"><span class="dot dot-real"></span>Real</span>
+          <span class="legend-item"><span class="dot dot-thresh"></span>50% Threshold</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="result-actions">
+        <button class="action-btn action-primary" onclick="resetUpload()">
+          🔄 Analyze Another Video
+        </button>
+        <button class="action-btn action-secondary" onclick="copyResult()">
+          📋 Copy Result
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Error Section ── -->
+    <section id="error-section" class="error-section hidden">
+      <div class="error-icon">❌</div>
+      <h3 class="error-title">Analysis Failed</h3>
+      <p id="error-msg" class="error-msg"></p>
+      <button class="action-btn action-primary" onclick="resetUpload()">Try Again</button>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Powered by <strong>DINOv2 ViT-B/14</strong> · Built for deepfake research</p>
+    <p class="footer-note">Max 30 MB · 60 seconds · Results are probabilistic, not legal evidence</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
