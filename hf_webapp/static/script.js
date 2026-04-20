@@ -1,59 +1,55 @@
 /**
- * DeepShield AI — script.js
- * Handles video upload, API call, results rendering, and per-frame chart.
- *
- * ⚙️  HF Space URL — update if your space name changes.
+ * DeepShield AI — script.js (Full-Stack HF Space version)
+ * API_URL = "" means: same server, same domain. No CORS needed!
  */
-const API_URL = "https://mrtsp-deepfake-dinov2-api.hf.space";
+const API_URL = "";  // Empty = same HF Space serves both UI and API
 
 // ── Server Status Ping ──
-// Checks if API is running and model IS uploaded. If not, disables the website.
 async function checkServerStatus() {
   const statusMenu = document.getElementById("server-status");
   const statusText = document.getElementById("status-text");
   const dropZone = document.getElementById("drop-zone");
 
-  if (!statusMenu) return; // In case UI hasn't fully loaded
+  if (!statusMenu) return;
 
   try {
-    const res = await fetch(`${API_URL}/`);
+    const res = await fetch(`${API_URL}/health`);
     if (!res.ok) throw new Error("Server not OK");
     const data = await res.json();
-    
-    statusMenu.className = "server-status"; // reset classes
-    
+
+    statusMenu.className = "server-status";
+
     if (data.model_loaded === true) {
       statusMenu.classList.add("status-connected");
-      statusText.textContent = "API Connected";
-      
-      // Enable Upload
+      statusText.textContent = "AI Ready ✓";
+
       dropZone.style.pointerEvents = "auto";
       dropZone.style.opacity = "1";
+      document.querySelector(".drop-title").innerHTML = "Drop your video here";
+      document.querySelector(".drop-sub").innerHTML = 'or <span class="link-text">browse files</span>';
     } else {
       statusMenu.classList.add("status-error");
       statusText.textContent = "Model Missing";
-      
-      // Disable Upload
+
       dropZone.style.pointerEvents = "none";
       dropZone.style.opacity = "0.5";
       document.querySelector(".drop-title").innerHTML = "⚠️ Model Not Uploaded";
-      document.querySelector(".drop-sub").textContent = "Please upload best_model.pth to Hugging Face!";
+      document.querySelector(".drop-sub").textContent = "Admin: Upload best_model.pth to this HF Space.";
     }
   } catch (err) {
     statusMenu.className = "server-status status-error";
-    statusText.textContent = "Server Sleeping / Offline";
-    
-    // Disable Upload
+    statusText.textContent = "Server Waking Up...";
+
     dropZone.style.pointerEvents = "none";
     dropZone.style.opacity = "0.5";
-    document.querySelector(".drop-title").innerHTML = "⚠️ Server is waking up...";
-    document.querySelector(".drop-sub").textContent = "Takes ~60s if sleeping. Please wait.";
+    document.querySelector(".drop-title").innerHTML = "⚠️ Server is starting...";
+    document.querySelector(".drop-sub").textContent = "Takes ~60 sec. Page will auto-refresh status.";
   }
 }
 
-// Check immediately, then every 15 seconds to keep it alive
+// Check on load, then every 10 seconds (also keeps server alive!)
 checkServerStatus();
-setInterval(checkServerStatus, 15000);
+setInterval(checkServerStatus, 10000);
 
 const MAX_FILE_MB = 30;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
@@ -61,9 +57,6 @@ const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 let currentFile = null;
 let lastResult = null;
 
-// ─────────────────────────────────────────────────────
-// Section switcher
-// ─────────────────────────────────────────────────────
 function showSection(id) {
   const sections = ["upload-section", "loading-section", "results-section", "error-section"];
   sections.forEach(s => {
@@ -71,9 +64,6 @@ function showSection(id) {
   });
 }
 
-// ─────────────────────────────────────────────────────
-// Drag & Drop handlers
-// ─────────────────────────────────────────────────────
 function onDragOver(e) {
   e.preventDefault();
   document.getElementById("drop-zone").classList.add("dragging");
@@ -95,9 +85,6 @@ function onFileSelected(e) {
   if (file) processFile(file);
 }
 
-// ─────────────────────────────────────────────────────
-// File Processing
-// ─────────────────────────────────────────────────────
 function processFile(file) {
   const allowedExt = [".mp4", ".mov", ".avi", ".mkv"];
   const ext = "." + file.name.split(".").pop().toLowerCase();
@@ -108,18 +95,16 @@ function processFile(file) {
 
   if (file.size > MAX_FILE_BYTES) {
     const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-    showError(`❌ File too large (${sizeMB} MB). Maximum allowed size is ${MAX_FILE_MB} MB.`);
+    showError(`❌ File too large (${sizeMB} MB). Maximum allowed: ${MAX_FILE_MB} MB.`);
     return;
   }
 
   currentFile = file;
-
   document.getElementById("file-name").textContent = file.name;
   document.getElementById("file-size").textContent = formatBytes(file.size);
 
   const url = URL.createObjectURL(file);
-  const video = document.getElementById("video-preview");
-  video.src = url;
+  document.getElementById("video-preview").src = url;
 
   document.getElementById("drop-zone").classList.add("hidden");
   document.getElementById("file-preview").classList.remove("hidden");
@@ -129,8 +114,7 @@ function resetUpload() {
   currentFile = null;
   lastResult = null;
 
-  const fileInput = document.getElementById("file-input");
-  fileInput.value = "";
+  document.getElementById("file-input").value = "";
 
   const video = document.getElementById("video-preview");
   if (video.src) URL.revokeObjectURL(video.src);
@@ -144,12 +128,12 @@ function resetUpload() {
   showSection("upload-section");
 
   const btn = document.getElementById("analyze-btn");
-  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="btn-icon">🔍</span><span>Analyze for Deepfakes</span>'; }
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">🔍</span><span>Analyze for Deepfakes</span>';
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Main: Analyze Video
-// ─────────────────────────────────────────────────────
 async function analyzeVideo() {
   if (!currentFile) return;
 
@@ -181,17 +165,14 @@ async function analyzeVideo() {
 
   } catch (err) {
     console.error("Analysis failed:", err);
-    let msg = err.message || "Could not connect to the analysis server.";
+    let msg = err.message || "Analysis failed.";
     if (msg.includes("fetch") || msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
-      msg = `⚠️ Cannot reach the DINO-G50 server.\n\nThe Hugging Face Space might be waking up (takes ~60 sec on first request). Please wait a moment and try again.\n\nServer: ${API_URL}`;
+      msg = "⚠️ Cannot reach the AI server. The server might be waking up. Please wait ~60 sec and try again.";
     }
     showError(msg);
   }
 }
 
-// ─────────────────────────────────────────────────────
-// Render Results
-// ─────────────────────────────────────────────────────
 function renderResults(data) {
   const isFake = data.verdict === "FAKE";
   const fakePct = data.fake_probability;
@@ -203,9 +184,10 @@ function renderResults(data) {
 
   const ring = document.getElementById("ring-fill");
   const circumference = 314;
-  const dashOffset = circumference - (fakePct / 100) * circumference;
   ring.style.stroke = isFake ? "#ef4444" : "#22c55e";
-  setTimeout(() => { ring.style.strokeDashoffset = dashOffset; }, 100);
+  setTimeout(() => {
+    ring.style.strokeDashoffset = circumference - (fakePct / 100) * circumference;
+  }, 100);
 
   document.getElementById("verdict-pct").textContent = `${fakePct}%`;
   const lbl = document.getElementById("verdict-label");
@@ -229,14 +211,12 @@ function renderFrameChart(scores) {
   container.innerHTML = "";
 
   if (!scores.length) {
-    container.innerHTML = '<p style="color:var(--text-sub);font-size:13px;padding:20px 0;">No per-frame data available.</p>';
+    container.innerHTML = '<p style="color:var(--text-sub);font-size:13px;padding:20px 0;">No per-frame data.</p>';
     return;
   }
 
   scores.forEach((score, i) => {
     const isFakeBar = score > 50;
-    const height = Math.max(4, score);
-
     const wrap = document.createElement("div");
     wrap.className = "bar-wrap";
 
@@ -248,28 +228,19 @@ function renderFrameChart(scores) {
     wrap.appendChild(bar);
     container.appendChild(wrap);
 
-    setTimeout(() => {
-      bar.style.height = `${height}%`;
-    }, 100 + i * 30);
+    setTimeout(() => { bar.style.height = `${Math.max(4, score)}%`; }, 100 + i * 30);
   });
 }
 
-// ─────────────────────────────────────────────────────
-// Error display
-// ─────────────────────────────────────────────────────
 function showError(msg) {
   document.getElementById("error-msg").textContent = msg;
   showSection("error-section");
 }
 
-// ─────────────────────────────────────────────────────
-// Loading step animation
-// ─────────────────────────────────────────────────────
 function animateLoadingSteps() {
   const steps = ["step-1", "step-2", "step-3"];
   steps.forEach(s => {
-    const el = document.getElementById(s);
-    el.classList.remove("active", "done");
+    document.getElementById(s).classList.remove("active", "done");
   });
 
   let i = 0;
@@ -287,9 +258,6 @@ function animateLoadingSteps() {
   next();
 }
 
-// ─────────────────────────────────────────────────────
-// Copy result to clipboard
-// ─────────────────────────────────────────────────────
 function copyResult() {
   if (!lastResult) return;
   const { verdict, fake_probability, real_probability, frame_count, filename } = lastResult;
@@ -297,8 +265,7 @@ function copyResult() {
     `DeepShield AI — DINO-G50 Result\n` +
     `File: ${filename}\n` +
     `Verdict: ${verdict}\n` +
-    `Fake Probability: ${fake_probability}%\n` +
-    `Real Probability: ${real_probability}%\n` +
+    `Fake: ${fake_probability}% | Real: ${real_probability}%\n` +
     `Frames Analyzed: ${frame_count}`;
 
   navigator.clipboard?.writeText(text).then(() => {
@@ -311,9 +278,6 @@ function copyResult() {
   }).catch(() => alert(text));
 }
 
-// ─────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────
 function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / 1024 / 1024).toFixed(1) + " MB";

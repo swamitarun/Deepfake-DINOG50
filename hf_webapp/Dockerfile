@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only PyTorch first (smaller, faster build)
+# Install CPU-only PyTorch first
 RUN pip install --no-cache-dir \
     torch==2.4.0+cpu \
     torchvision==0.19.0+cpu \
@@ -23,8 +23,11 @@ RUN pip install --no-cache-dir \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# Copy app + static frontend files
 COPY app.py .
+COPY static/ ./static/
+# Copy model checkpoint (uploaded separately to HF Space repo)
+COPY best_model.pth .
 
 # HF Spaces requires port 7860
 EXPOSE 7860
