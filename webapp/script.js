@@ -2,10 +2,17 @@
  * DeepShield AI — script.js
  * Handles video upload, API call, results rendering, and per-frame chart.
  *
- * ⚙️  IMPORTANT: Set this URL to your Hugging Face Space URL after deploying.
- * Format: https://<username>-<space-name>.hf.space
+ * ⚙️  HF Space URL — update if your space name changes.
  */
 const API_URL = "https://mrtsp-deepfake-dinov2-api.hf.space";
+
+// ── Keep-Alive: Ping HF Space every 9 min to prevent free-tier sleep ──
+// Free HF Spaces sleep after 15min idle — this ping prevents that!
+(function startKeepAlive() {
+  const ping = () => fetch(`${API_URL}/`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+  ping(); // Wake Space immediately on page load
+  setInterval(ping, 9 * 60 * 1000); // Ping every 9 minutes
+})();
 
 const MAX_FILE_MB = 30;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
@@ -51,7 +58,6 @@ function onFileSelected(e) {
 // File Processing
 // ─────────────────────────────────────────────────────
 function processFile(file) {
-  // Validate type
   const allowedExt = [".mp4", ".mov", ".avi", ".mkv"];
   const ext = "." + file.name.split(".").pop().toLowerCase();
   if (!allowedExt.includes(ext)) {
@@ -59,7 +65,6 @@ function processFile(file) {
     return;
   }
 
-  // Validate size
   if (file.size > MAX_FILE_BYTES) {
     const sizeMB = (file.size / 1024 / 1024).toFixed(1);
     showError(`❌ File too large (${sizeMB} MB). Maximum allowed size is ${MAX_FILE_MB} MB.`);
@@ -68,16 +73,13 @@ function processFile(file) {
 
   currentFile = file;
 
-  // Update file info
   document.getElementById("file-name").textContent = file.name;
   document.getElementById("file-size").textContent = formatBytes(file.size);
 
-  // Load video preview
   const url = URL.createObjectURL(file);
   const video = document.getElementById("video-preview");
   video.src = url;
 
-  // Show file preview, hide drop zone
   document.getElementById("drop-zone").classList.add("hidden");
   document.getElementById("file-preview").classList.remove("hidden");
 }
@@ -86,25 +88,20 @@ function resetUpload() {
   currentFile = null;
   lastResult = null;
 
-  // Reset file input
   const fileInput = document.getElementById("file-input");
   fileInput.value = "";
 
-  // Reset video
   const video = document.getElementById("video-preview");
   if (video.src) URL.revokeObjectURL(video.src);
   video.src = "";
 
-  // Reset ring & chart
   document.getElementById("ring-fill").style.strokeDashoffset = "314";
   document.getElementById("frame-chart").innerHTML = "";
 
-  // Show upload, hide all others
   document.getElementById("drop-zone").classList.remove("hidden");
   document.getElementById("file-preview").classList.add("hidden");
   showSection("upload-section");
 
-  // Re-enable analyze button
   const btn = document.getElementById("analyze-btn");
   if (btn) { btn.disabled = false; btn.innerHTML = '<span class="btn-icon">🔍</span><span>Analyze for Deepfakes</span>'; }
 }
@@ -145,7 +142,7 @@ async function analyzeVideo() {
     console.error("Analysis failed:", err);
     let msg = err.message || "Could not connect to the analysis server.";
     if (msg.includes("fetch") || msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
-      msg = `Cannot reach the API server. Make sure the Hugging Face Space is running.\n\n(${API_URL})`;
+      msg = `⚠️ Cannot reach the DINO-G50 server.\n\nThe Hugging Face Space might be waking up (takes ~60 sec on first request). Please wait a moment and try again.\n\nServer: ${API_URL}`;
     }
     showError(msg);
   }
@@ -159,36 +156,30 @@ function renderResults(data) {
   const fakePct = data.fake_probability;
   const realPct = data.real_probability;
 
-  // Verdict card class
   const card = document.getElementById("verdict-card");
   card.classList.remove("is-fake", "is-real");
   card.classList.add(isFake ? "is-fake" : "is-real");
 
-  // Circular ring
   const ring = document.getElementById("ring-fill");
   const circumference = 314;
   const dashOffset = circumference - (fakePct / 100) * circumference;
   ring.style.stroke = isFake ? "#ef4444" : "#22c55e";
   setTimeout(() => { ring.style.strokeDashoffset = dashOffset; }, 100);
 
-  // Text in ring
   document.getElementById("verdict-pct").textContent = `${fakePct}%`;
   const lbl = document.getElementById("verdict-label");
   lbl.textContent = data.verdict;
   lbl.style.color = isFake ? "#f87171" : "#4ade80";
 
-  // Badge
   const badge = document.getElementById("verdict-badge");
   badge.textContent = isFake ? "⚠️  FAKE DETECTED" : "✅ REAL VIDEO";
   badge.className = "verdict-badge " + (isFake ? "fake" : "real");
 
-  // Stats
   document.getElementById("stat-fake").textContent = `${fakePct}%`;
   document.getElementById("stat-real").textContent = `${realPct}%`;
   document.getElementById("stat-frames").textContent = `${data.frame_count} frames`;
   document.getElementById("stat-size").textContent = `${data.file_size_mb} MB`;
 
-  // Per-frame bar chart
   renderFrameChart(data.per_frame_scores || []);
 }
 
@@ -216,7 +207,6 @@ function renderFrameChart(scores) {
     wrap.appendChild(bar);
     container.appendChild(wrap);
 
-    // Animate bars in
     setTimeout(() => {
       bar.style.height = `${height}%`;
     }, 100 + i * 30);
@@ -236,7 +226,6 @@ function showError(msg) {
 // ─────────────────────────────────────────────────────
 function animateLoadingSteps() {
   const steps = ["step-1", "step-2", "step-3"];
-  // Reset
   steps.forEach(s => {
     const el = document.getElementById(s);
     el.classList.remove("active", "done");
@@ -264,7 +253,7 @@ function copyResult() {
   if (!lastResult) return;
   const { verdict, fake_probability, real_probability, frame_count, filename } = lastResult;
   const text =
-    `DeepShield AI Result\n` +
+    `DeepShield AI — DINO-G50 Result\n` +
     `File: ${filename}\n` +
     `Verdict: ${verdict}\n` +
     `Fake Probability: ${fake_probability}%\n` +
