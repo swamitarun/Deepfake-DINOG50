@@ -1,0 +1,67 @@
+[2026-04-20 14:48:45] INFO - root - Logging to file: results2/logs/training.log
+[2026-04-20 14:48:45] INFO - src.utils.helpers - Random seed set to 42
+[2026-04-20 14:48:45] INFO - src.utils.helpers - Using GPU: NVIDIA RTX A6000
+[2026-04-20 14:48:45] INFO - src.utils.helpers - GPU Memory: 50.9 GB
+[2026-04-20 14:48:45] INFO - __main__ - ==================================================
+[2026-04-20 14:48:45] INFO - __main__ -   FAST TRAINING — MLP on cached DINOv2 features
+[2026-04-20 14:48:45] INFO - __main__ - ==================================================
+[2026-04-20 14:48:45] INFO - __main__ -   Train: 38201  Val: 8186  Test: 8187
+[2026-04-20 14:48:45] INFO - __main__ -   Feature dim: 768
+[2026-04-20 14:48:45] INFO - __main__ -   Balanced sampling: real=4028, fake=34173
+[2026-04-20 14:48:45] INFO - __main__ -   Class weights: real=4.74, fake=0.56
+[2026-04-20 14:48:46] INFO - __main__ -   MLP params: 527,106
+[2026-04-20 14:48:46] INFO - __main__ -   Epochs: 10  LR: 0.001  Batch: 256
+[2026-04-20 14:49:44] INFO - src.utils.visualization - Training curves saved to results2/plots/fast_training_curves.png
+[2026-04-20 14:57:58] INFO - root - Logging to file: results2/logs/training.log
+[2026-04-20 14:57:58] INFO - src.utils.helpers - Random seed set to 42
+[2026-04-20 14:57:59] INFO - src.utils.helpers - Using GPU: NVIDIA RTX A6000
+[2026-04-20 14:57:59] INFO - src.utils.helpers - GPU Memory: 50.9 GB
+[2026-04-20 14:58:02] INFO - __main__ - Using pre-computed faces from data/faces
+[2026-04-20 14:58:03] INFO - src.data.dataset - DualInput dataset: 54575 samples (Real: 5728, Fake: 48847) | Faces dir: available
+[2026-04-20 14:58:03] INFO - src.data.dataset - Dataset split — Train: 38202, Val: 8186, Test: 8187
+[2026-04-20 14:58:03] INFO - src.data.dataset - Balanced sampling ENABLED — Train: 4027 real, 34175 fake (weights: real=4.74, fake=0.56)
+[2026-04-20 14:58:03] INFO - src.models.dino_extractor - Loading dinov2_vitb14 from torch.hub ...
+[2026-04-20 14:58:04] INFO - dinov2 - using MLP layer as FFN
+[2026-04-20 14:58:05] INFO - src.models.dino_extractor - DINOv2 loaded.
+[2026-04-20 14:58:05] INFO - src.models.dino_extractor - Backbone: 86,580,480 total | 14,180,352 trainable | 72,400,128 frozen
+[2026-04-20 14:58:05] INFO - src.models.classifier - ==================================================
+[2026-04-20 14:58:05] INFO - src.models.classifier -   DEEPFAKE CLASSIFIER SUMMARY
+[2026-04-20 14:58:05] INFO - src.models.classifier -   Backbone:    dinov2_vitb14  (trainable: 14,180,352)
+[2026-04-20 14:58:05] INFO - src.models.classifier -   Dual input:  True  (classifier input: 1536)
+[2026-04-20 14:58:05] INFO - src.models.classifier -   MLP params:  920,322
+[2026-04-20 14:58:05] INFO - src.models.classifier -   TOTAL train: 15,100,674
+[2026-04-20 14:58:05] INFO - src.models.classifier - ==================================================
+[2026-04-20 14:58:06] INFO - __main__ - Class weights: Real=4.76, Fake=0.56
+[2026-04-20 14:58:07] INFO - src.training.trainer - ==================================================
+[2026-04-20 14:58:07] INFO - src.training.trainer - TRAINING START
+[2026-04-20 14:58:07] INFO - src.training.trainer -   Epochs: 10 | Device: cuda | AMP: True
+[2026-04-20 14:58:07] INFO - src.training.trainer - ==================================================
+[2026-04-20 16:28:24] INFO - src.training.trainer - Training done. Best epoch 8, val_acc=96.58%
+[2026-04-20 16:28:24] INFO - src.utils.visualization - Training curves saved to results2/plots/training_curves.png
+[2026-04-20 16:41:04] INFO - root - Logging to file: results2/logs/training.log
+[2026-04-20 16:41:04] INFO - src.utils.helpers - Random seed set to 42
+[2026-04-20 16:41:04] INFO - src.utils.helpers - Using GPU: NVIDIA RTX A6000
+[2026-04-20 16:41:04] INFO - src.utils.helpers - GPU Memory: 50.9 GB
+[2026-04-20 16:41:04] INFO - __main__ - ==================================================
+[2026-04-20 16:41:04] INFO - __main__ -   DINOv2 DEEPFAKE DETECTOR — EVALUATION
+[2026-04-20 16:41:04] INFO - __main__ - ==================================================
+[2026-04-20 16:41:08] INFO - src.data.dataset - DualInput dataset: 54575 samples (Real: 5728, Fake: 48847) | Faces dir: available
+[2026-04-20 16:41:08] INFO - src.data.dataset - Dataset split — Train: 38202, Val: 8186, Test: 8187
+[2026-04-20 16:41:08] INFO - src.data.dataset - Balanced sampling ENABLED — Train: 4027 real, 34175 fake (weights: real=4.74, fake=0.56)
+[2026-04-20 16:41:08] INFO - src.models.dino_extractor - Loading dinov2_vitb14 from torch.hub ...
+[2026-04-20 16:41:08] INFO - dinov2 - using MLP layer as FFN
+[2026-04-20 16:41:09] INFO - src.models.dino_extractor - DINOv2 loaded.
+[2026-04-20 16:41:09] INFO - src.models.dino_extractor - Backbone: 86,580,480 total | 14,180,352 trainable | 72,400,128 frozen
+[2026-04-20 16:41:09] INFO - src.models.classifier - ==================================================
+[2026-04-20 16:41:09] INFO - src.models.classifier -   DEEPFAKE CLASSIFIER SUMMARY
+[2026-04-20 16:41:09] INFO - src.models.classifier -   Backbone:    dinov2_vitb14  (trainable: 14,180,352)
+[2026-04-20 16:41:09] INFO - src.models.classifier -   Dual input:  True  (classifier input: 1536)
+[2026-04-20 16:41:09] INFO - src.models.classifier -   MLP params:  920,322
+[2026-04-20 16:41:09] INFO - src.models.classifier -   TOTAL train: 15,100,674
+[2026-04-20 16:41:09] INFO - src.models.classifier - ==================================================
+[2026-04-20 16:41:10] INFO - __main__ - Loaded full model checkpoint epoch 8
+[2026-04-20 16:41:11] INFO - src.evaluation.evaluator - Running evaluation on test set...
+[2026-04-20 16:45:28] INFO - src.utils.visualization - Confusion matrix saved to results2/plots/confusion_matrix.png
+[2026-04-20 16:45:28] INFO - src.utils.visualization - ROC curve saved to results2/plots/roc_curve.png
+[2026-04-20 16:45:28] INFO - __main__ - 
+✅ Evaluation complete! Plots: results2/plots/
